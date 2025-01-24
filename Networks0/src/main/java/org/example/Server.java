@@ -5,11 +5,24 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
 
 public class Server {
     public static void main(String[] args) {
-        int port = 25252;
+        try {
+            System.out.println("Введите порт:");
+            int port = getPortFromUser();
+            processServerOnPort(port);
+        } catch (NumberFormatException ex) {
+            System.err.println("Ошибка при распознавании порта");
+        } catch (IOException ex) {
+            System.err.println("Ошибка на стороне сервера:" + ex.getMessage());
+        } finally {
+            System.out.println("Сервер завершил работу");
+        }
+    }
 
+    public static void processServerOnPort(int port) throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Сервер запущен, ожидаем подключения...");
 
@@ -24,9 +37,12 @@ public class Server {
                     out.println(currentTime);
                 }
             }
-        } catch (IOException e) {
-            System.err.println("Ошибка на стороне сервера: " + e.getMessage());
         }
+    }
+    public static int getPortFromUser() throws NumberFormatException {
+        Scanner in = new Scanner(System.in);
+        String userInput = in.nextLine();
+        return Integer.parseInt(userInput);
     }
 
 }
