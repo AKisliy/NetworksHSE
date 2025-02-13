@@ -18,9 +18,9 @@ public class Client {
         );
 
         try (Socket socket = new Socket(input.host, input.port)) {
-            System.out.println("Подключен к серверу!");
+            System.out.println("Подключен к серверу! (v3)");
             socket.setTcpNoDelay(true);
-            processor.ProcessExperiment(socket);
+            processor.processExperiment(socket);
         } catch (IOException e) {
             System.err.println("Ошибка на стороне клиента: " + e.getMessage());
         }

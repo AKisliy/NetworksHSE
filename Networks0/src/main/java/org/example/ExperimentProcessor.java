@@ -10,7 +10,7 @@ public class ExperimentProcessor {
     private final int q;
     private final String outputFilePath;
 
-    private BufferedReader in;
+    private InputStream in;
     private OutputStream out;
 
     public ExperimentProcessor(int arraySizeMultiplier, int numberOfIterations, int numberOfNestedOperations, String outputFilePath){
@@ -20,20 +20,16 @@ public class ExperimentProcessor {
         this.outputFilePath = outputFilePath;
     }
 
-    public void ProcessExperiment(Socket socket) throws IOException {
-        try (
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        ) {
-            this.in = in;
-            this.out = socket.getOutputStream();
-            for (long i = 0; i < m; ++i) {
-                ProcessIteration(i);
-            }
+    public void processExperiment(Socket socket) throws IOException {
+        in = socket.getInputStream();
+        out = socket.getOutputStream();
+        for (long i = 0; i < m; ++i) {
+            processIteration(i);
         }
     }
 
 
-    private void WriteResults(long size, long averageDuration){
+    private void writeResults(long size, long averageDuration){
         try (PrintWriter resultsWriter = new PrintWriter(new FileWriter(outputFilePath, StandardCharsets.UTF_8, true))){
             resultsWriter.println(String.format("%d;%d", size, averageDuration));
         } catch (IOException e) {
@@ -41,23 +37,27 @@ public class ExperimentProcessor {
         }
     }
 
-    private void ProcessIteration(long iterationNum) throws IOException {
+    private void processIteration(long iterationNum) throws IOException {
         long curSize = n * iterationNum + 8;
         long curSum = 0;
         for (int j = 0; j < q; ++j){
-            String dataForServer = Generator.GenerateRandomString(curSize);
-            curSum += SendDataAndMeasureTime(dataForServer);
+            String dataForServer = Utils.GenerateRandomString(curSize);
+            curSum += sendDataAndMeasureTime(dataForServer);
         }
         long averageTime = curSum / q;
-        WriteResults(curSize, averageTime);
+        writeResults(curSize, averageTime);
     }
 
-    private long SendDataAndMeasureTime(String data) throws IOException {
+    private long sendDataAndMeasureTime(String data) throws IOException {
+        byte[] dataToSend = data.getBytes();
+        byte[] dataLenInBytes = Utils.intToByteArray(dataToSend.length);
         long start = System.currentTimeMillis();
-        out.write((data + "\n").getBytes());
+        out.write(dataLenInBytes);
+        out.write(dataToSend);
         out.flush();
         // wait for response
-        in.readLine();
+        Utils.readBytesFromInputStream(in);
         return System.currentTimeMillis() - start;
     }
+
 }

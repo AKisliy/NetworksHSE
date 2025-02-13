@@ -27,19 +27,29 @@ public class Server {
             System.out.println("Сервер запущен, ожидаем подключения...");
 
             try (Socket clientSocket = serverSocket.accept()) {
-                System.out.println("Клиент подключен!");
+                System.out.println("Клиент подключен! (v3)");
 
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                InputStream in = clientSocket.getInputStream();
+                OutputStream out = clientSocket.getOutputStream();
 
-                while (in.readLine() != null) {
-                    String currentTime = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date());
-                    out.println(currentTime);
+                while(true){
+                    boolean streamHasBytes = Utils.readBytesFromInputStream(in);
+                    if (!streamHasBytes)
+                        break;
+                    writeResponseToClient(out);
                 }
             }
         }
     }
-    public static int getPortFromUser() throws NumberFormatException {
+
+    private static void writeResponseToClient(OutputStream outputStream) throws IOException {
+        String currentTime = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date());
+        int dataSize = currentTime.getBytes().length;
+        outputStream.write(Utils.intToByteArray(dataSize));
+        outputStream.write(currentTime.getBytes());
+        outputStream.flush();
+    }
+    private static int getPortFromUser() throws NumberFormatException {
         Scanner in = new Scanner(System.in);
         String userInput = in.nextLine();
         return Integer.parseInt(userInput);
